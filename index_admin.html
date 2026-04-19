@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AuctioLite – Администратор</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+:root {
+  --bg: #0d0d0d;
+  --surface: #161616;
+  --surface2: #1f1f1f;
+  --border: #2a2a2a;
+  --gold: #c9a84c;
+  --gold-light: #e8c96d;
+  --red: #e05252;
+  --green: #4caf7d;
+  --blue: #5286e0;
+  --text: #f0ede8;
+  --muted: #888;
+  --radius: 12px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+/* HEADER */
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.logo {
+  font-family: Georgia, serif;
+  font-size: 20px;
+  color: var(--gold);
+}
+
+.admin-badge {
+  font-size: 11px;
+  background: #2a1a00;
+  color: var(--gold);
+  border: 1px solid #3d2800;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* LAYOUT */
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: calc(100vh - 57px);
+}
+
+/* SIDEBAR */
+aside {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 20px 0;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.18s;
+  border-left: 3px solid transparent;
+}
+
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+
+.nav-item.active {
+  color: var(--gold);
+  border-left-color: var(--gold);
+  background: linear-gradient(90deg, #1a1200 0%, transparent 100%);
+}
+
+.nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+.nav-badge { margin-left: auto; background: var(--red); color: #fff; font-size: 11px; padding: 1px 7px; border-radius: 20px; }
+.nav-divider { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+
+.nav-logout {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  font-size: 14px;
+  color: var(--red);
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.nav-logout:hover { background: #2a0a0a; }
+
+/* MAIN */
+.content {
+  padding: 28px;
+  overflow-y: auto;
+}
+
+/* PAGE SECTIONS */
+.page { display: none; }
+.page.active { display: block; }
+
+.page-title {
+  font-family: Georgia, serif;
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.page-sub {
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
+
+/* STATS ROW */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+
+.stat-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px; }
+.stat-value { font-family: Georgia, serif; font-size: 30px; color: var(--text); }
+.stat-value.gold { color: var(--gold); }
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+
+/* CARD */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.card-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+}
+
+.card-body { padding: 4px 0; }
+
+/* TABLE-LIKE ITEMS */
+.row-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s;
+  gap: 12px;
+}
+
+.row-item:last-child { border-bottom: none; }
+.row-item:hover { background: var(--surface2); }
+
+.row-main { flex: 1; min-width: 0; }
+.row-name { font-weight: 500; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.row-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* BUTTONS */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+
+.btn:active { transform: scale(0.96); }
+.btn-gold { background: var(--gold); color: #0d0d0d; }
+.btn-gold:hover { background: var(--gold-light); }
+.btn-green { background: transparent; border: 1px solid var(--green); color: var(--green); }
+.btn-green:hover { background: var(--green); color: #0d0d0d; }
+.btn-red { background: transparent; border: 1px solid var(--red); color: var(--red); }
+.btn-red:hover { background: var(--red); color: #fff; }
+.btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { border-color: var(--muted); }
+.btn-full { display: block; width: 100%; padding: 13px; margin-top: 10px; border-radius: 10px; font-size: 15px; }
+
+/* BADGE */
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.badge-green { background: #0d2b1a; color: var(--green); border: 1px solid #1a4a2e; }
+.badge-yellow { background: #2b1f00; color: #e8a030; border: 1px solid #3d2d00; }
+.badge-red { background: #2b0d0d; color: var(--red); border: 1px solid #4a1a1a; }
+
+/* INPUTS */
+input, textarea, select {
+  width: 100%;
+  padding: 12px 14px;
+  margin-top: 8px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  transition: border-color 0.2s;
+  outline: none;
+}
+
+input:focus, textarea:focus, select:focus { border-color: var(--gold); }
+input::placeholder, textarea::placeholder { color: var(--muted); }
+textarea { resize: vertical; min-height: 80px; }
+
+.form-label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-top: 14px; display: block; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+/* MOTIVATION BOX */
+.motivation-text {
+  font-size: 13px;
+  color: var(--muted);
+  font-style: italic;
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 6px;
+  line-height: 1.5;
+}
+
+/* EMPTY STATE */
+.empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* MSG */
+.msg { font-size: 13px; padding: 8px 0; min-height: 22px; color: var(--muted); }
+.msg.error { color: var(--red); }
+.msg.success { color: var(--green); }
+
+/* MOBILE NAV */
+@media (max-width: 640px) {
+  .layout { grid-template-columns: 1fr; }
+  aside {
+    display: flex;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 0;
+  }
+  .nav-item { flex-direction: column; gap: 4px; padding: 10px 14px; border-left: none; border-bottom: 3px solid transparent; font-size: 11px; min-width: 70px; text-align: center; }
+  .nav-item.active { border-left-color: transparent; border-bottom-color: var(--gold); background: linear-gradient(180deg, transparent 0%, #1a1200 100%); }
+  .nav-item .icon { font-size: 20px; }
+  .nav-badge, .nav-divider, .nav-logout { display: none; }
+  .content { padding: 16px; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .form-row { grid-template-columns: 1fr; }
+}
+
+/* SCROLL */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">✦ AuctioLite</div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <span class="admin-badge">Admin</span>
+    <button onclick="logout()" class="btn btn-ghost" style="padding:6px 14px;font-size:13px;">Изход</button>
+  </div>
+</header>
+
+<div class="layout">
+  <aside>
+    <div class="nav-item active" onclick="goPage('dashboard')">
+      <span class="icon">📊</span> Табло
+    </div>
+    <div class="nav-item" onclick="goPage('users')" id="nav-users">
+      <span class="icon">👥</span> Потребители
+      <span class="nav-badge" id="pending-badge" style="display:none">0</span>
+    </div>
+    <div class="nav-item" onclick="goPage('bids')">
+      <span class="icon">💰</span> Наддавания
+    </div>
+    <div class="nav-item" onclick="goPage('products')">
+      <span class="icon">📦</span> Продукти
+    </div>
+    <hr class="nav-divider">
+    <div class="nav-logout" onclick="logout()">
+      <span class="icon">🚪</span> Изход
+    </div>
+  </aside>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="page-title">Здравей ✦</div>
+      <div class="page-sub">Преглед на активния търг</div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Текуща цена</div>
+          <div class="stat-value gold" id="stat-price">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Наддавания</div>
+          <div class="stat-value" id="stat-bids">—</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Одобрени</div>
+          <div class="stat-value green" id="stat-users">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Последни наддавания</div>
+          <button class="btn btn-ghost" onclick="loadDashboard()">↻ Обнови</button>
+        </div>
+        <div class="card-body" id="dashboard-bids">
+          <div class="empty">Зареждане...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="page-users">
+      <div class="page-title">Потребители</div>
+      <div class="page-sub">Одобрете новите заявки или управлявайте съществуващите</div>
+
+      <div class="card" id="pending-card">
+        <div class="card-header">
+          <div class="card-title">⏳ Чакат одобрение</div>
+        </div>
+        <div class="card-body" id="pending-list">
+          <div class="empty">Зареждане...</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">✓ Одобрени потребители</div>
+        </div>
+        <div class="card-body" id="verified-list">
+          <div class="empty">Зареждане...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- BIDS -->
+    <div class="page" id="page-bids">
+      <div class="page-title">Всички наддавания</div>
+      <div class="page-sub">Пълна история</div>
+      <div class="card">
+        <div class="card-body" id="all-bids-list">
+          <div class="empty">Зареждане...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCTS -->
+    <div class="page" id="page-products">
+      <div class="page-title">Управление на продукти</div>
+      <div class="page-sub">Добавете или редактирайте продукти за наддаване</div>
+
+      <div class="card" style="padding:20px;">
+        <div class="card-title" style="margin-bottom:16px;">➕ Нов продукт</div>
+        <label class="form-label">Заглавие</label>
+        <input id="prod-title" placeholder="Напр. Vintage Rolex Submariner">
+        <label class="form-label">Описание</label>
+        <textarea id="prod-desc" placeholder="Подробно описание на продукта..."></textarea>
+        <div class="form-row">
+          <div>
+            <label class="form-label">Начална цена (лв.)</label>
+            <input id="prod-price" type="number" placeholder="500">
+          </div>
+          <div>
+            <label class="form-label">Мин. стъпка (лв.)</label>
+            <input id="prod-step" type="number" placeholder="50">
+          </div>
+        </div>
+        <button class="btn btn-gold btn-full" onclick="addProduct()">Добави продукт →</button>
+        <p class="msg" id="prod-msg"></p>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Съществуващи продукти</div></div>
+        <div class="card-body" id="products-list">
+          <div class="empty">Зареждане...</div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /layout -->
+
+<script>
+const SUPABASE_URL = "https://uanpswocsbhpeoavcaus.supabase.co";
+const SUPABASE_KEY = "sb_publishable_wgZTbaJ-zhv5J5diU6nfOw_8M-CLe55";
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let currentPage = 'dashboard';
+let auctionId = null;
+
+const $ = id => document.getElementById(id);
+
+function showMsg(id, text, type = '') {
+  const el = $(id);
+  el.className = 'msg ' + type;
+  el.textContent = text;
+  if (type) setTimeout(() => { el.textContent = ''; el.className = 'msg'; }, 4000);
+}
+
+// ─── NAV ───
+function goPage(p) {
+  document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+
+  $('page-' + p).classList.add('active');
+  document.querySelector(`.nav-item[onclick="goPage('${p}')"]`).classList.add('active');
+  currentPage = p;
+
+  if (p === 'dashboard') loadDashboard();
+  if (p === 'users') loadUsers();
+  if (p === 'bids') loadAllBids();
+  if (p === 'products') loadProducts();
+}
+
+// ─── INIT ───
+async function init() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) { alert('Не си влязъл!'); location.href = '/'; return; }
+
+  const ADMIN_ID = 'db3ce98b-b06c-41a8-b5ae-c6257093660e';
+  if (session.user.id !== ADMIN_ID) { alert('Нямаш права!'); location.href = '/'; return; }
+
+  // get first auction id
+  const { data: items } = await sb.from('auction_items').select('id').limit(1);
+  if (items && items[0]) auctionId = items[0].id;
+
+  loadDashboard();
+  checkPending();
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  location.href = '/';
+}
+
+// ─── PENDING BADGE ───
+async function checkPending() {
+  const { data } = await sb.from('auction_profiles').select('id', { count: 'exact' }).eq('is_verified', false).eq('role', 'user');
+  const count = data ? data.length : 0;
+  const badge = $('pending-badge');
+  if (count > 0) { badge.textContent = count; badge.style.display = 'inline'; }
+  else badge.style.display = 'none';
+}
+
+// ─── DASHBOARD ───
+async function loadDashboard() {
+  // stats
+  if (auctionId) {
+    const { data: item } = await sb.from('auction_items').select('current_price').eq('id', auctionId).single();
+    if (item) $('stat-price').textContent = Number(item.current_price).toLocaleString('bg-BG') + ' лв.';
+
+    const { data: bids } = await sb.from('bids').select('id', { count: 'exact' }).eq('auction_id', auctionId);
+    $('stat-bids').textContent = bids ? bids.length : 0;
+  }
+
+  const { data: vUsers } = await sb.from('auction_profiles').select('id', { count: 'exact' }).eq('is_verified', true);
+  $('stat-users').textContent = vUsers ? vUsers.length : 0;
+
+  // recent bids
+  const { data: recentBids } = await sb
+    .from('bids')
+    .select('amount, created_at, auction_profiles(full_name, nickname), auction_items(title)')
+    .order('created_at', { ascending: false })
+    .limit(10);
+
+  const box = $('dashboard-bids');
+  if (!recentBids || !recentBids.length) { box.innerHTML = '<div class="empty">Все още няма наддавания</div>'; return; }
+
+  box.innerHTML = recentBids.map(b => {
+    const time = new Date(b.created_at).toLocaleString('bg-BG', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
+    const nick = b.auction_profiles?.nickname || b.auction_profiles?.full_name || '—';
+    return `
+      <div class="row-item">
+        <div class="row-main">
+          <div class="row-name">${nick}</div>
+          <div class="row-sub">${b.auction_items?.title || '—'} · ${time}</div>
+        </div>
+        <div style="color:var(--gold);font-weight:700;font-size:16px;">${Number(b.amount).toLocaleString('bg-BG')} лв.</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── USERS ───
+async function loadUsers() {
+  // pending
+  const { data: pending } = await sb.from('auction_profiles').select('*').eq('is_verified', false).eq('role', 'user');
+  const pendingBox = $('pending-list');
+
+  if (!pending || !pending.length) {
+    pendingBox.innerHTML = '<div class="empty">Няма чакащи заявки 🎉</div>';
+  } else {
+    pendingBox.innerHTML = pending.map(u => `
+      <div class="row-item" id="row-${u.id}" style="flex-direction:column;align-items:flex-start;gap:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;width:100%;gap:10px;">
+          <div class="row-main">
+            <div class="row-name">${u.full_name}</div>
+            <div class="row-sub">
+              🎭 Псевдоним: <strong style="color:var(--gold)">${u.nickname || '—'}</strong>
+              &nbsp;·&nbsp; 📞 <strong style="color:var(--text)">${u.phone || '—'}</strong>
+            </div>
+          </div>
+          <div class="row-actions">
+            <button class="btn btn-green" onclick="approveUser('${u.id}')">✓ Одобри</button>
+            <button class="btn btn-red" onclick="deleteUser('${u.id}')">✗ Откажи</button>
+          </div>
+        </div>
+        ${u.motivation ? `<div class="motivation-text">💬 "${u.motivation}"</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  // verified
+  const { data: verified } = await sb.from('auction_profiles').select('*').eq('is_verified', true);
+  const verifiedBox = $('verified-list');
+
+  if (!verified || !verified.length) {
+    verifiedBox.innerHTML = '<div class="empty">Няма одобрени потребители</div>';
+  } else {
+    verifiedBox.innerHTML = verified.map(u => `
+      <div class="row-item">
+        <div class="row-main">
+          <div class="row-name">${u.full_name} <span style="color:var(--gold);font-size:13px;">(${u.nickname || '—'})</span></div>
+          <div class="row-sub">${u.role === 'admin' ? '👑 Администратор' : '✓ Одобрен участник'}</div>
+        </div>
+        <div class="row-actions">
+          ${u.role !== 'admin' ? `<button class="btn btn-red" onclick="deleteUser('${u.id}')">Изтрий</button>` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  checkPending();
+}
+
+async function approveUser(id) {
+  await sb.from('auction_profiles').update({ is_verified: true }).eq('id', id);
+  $('row-' + id)?.remove();
+  checkPending();
+  // refresh verified list
+  loadUsers();
+}
+
+async function deleteUser(id) {
+  if (!confirm('Сигурен ли си? Потребителят ще бъде изтрит!')) return;
+  await sb.from('auction_profiles').delete().eq('id', id);
+  loadUsers();
+}
+
+// ─── ALL BIDS ───
+async function loadAllBids() {
+  const { data: bids } = await sb
+    .from('bids')
+    .select('amount, created_at, auction_profiles(full_name, nickname), auction_items(title)')
+    .order('created_at', { ascending: false });
+
+  const box = $('all-bids-list');
+  if (!bids || !bids.length) { box.innerHTML = '<div class="empty">Няма наддавания</div>'; return; }
+
+  box.innerHTML = bids.map(b => {
+    const time = new Date(b.created_at).toLocaleString('bg-BG', { dateStyle: 'short', timeStyle: 'short' });
+    const nick = b.auction_profiles?.nickname || b.auction_profiles?.full_name || '—';
+    return `
+      <div class="row-item">
+        <div class="row-main">
+          <div class="row-name">${nick}</div>
+          <div class="row-sub">${b.auction_items?.title || '—'} · ${time}</div>
+        </div>
+        <div style="color:var(--gold);font-weight:700;">${Number(b.amount).toLocaleString('bg-BG')} лв.</div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ─── PRODUCTS ───
+async function loadProducts() {
+  const { data } = await sb.from('auction_items').select('*').order('created_at', { ascending: false });
+  const box = $('products-list');
+
+  if (!data || !data.length) { box.innerHTML = '<div class="empty">Няма продукти</div>'; return; }
+
+  box.innerHTML = data.map(p => `
+    <div class="row-item">
+      <div class="row-main">
+        <div class="row-name">${p.title}</div>
+        <div class="row-sub">Текуща цена: ${Number(p.current_price).toLocaleString('bg-BG')} лв.</div>
+      </div>
+      <div class="row-actions">
+        <span class="badge badge-green">Активен</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function addProduct() {
+  const title = $('prod-title').value.trim();
+  const desc = $('prod-desc').value.trim();
+  const price = parseFloat($('prod-price').value);
+  const step = parseFloat($('prod-step').value) || 1;
+
+  if (!title || !price) { showMsg('prod-msg', 'Заглавие и начална цена са задължителни!', 'error'); return; }
+
+  showMsg('prod-msg', 'Добавяне...');
+
+  const { error } = await sb.from('auction_items').insert([{
+    title,
+    description: desc,
+    current_price: price,
+    min_step: step
+  }]);
+
+  if (error) {
+    showMsg('prod-msg', error.message, 'error');
+  } else {
+    $('prod-title').value = '';
+    $('prod-desc').value = '';
+    $('prod-price').value = '';
+    $('prod-step').value = '';
+    showMsg('prod-msg', '✓ Продуктът е добавен успешно!', 'success');
+    loadProducts();
+  }
+}
+
+init();
+</script>
+</body>
+</html>

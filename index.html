@@ -239,6 +239,7 @@ async function loadProducts() {
 function renderProducts() {
   $('products-list').innerHTML = allProducts.map(p => `
     <div class="product-card ${selectedAuctionId === p.id ? 'active' : ''}" onclick="selectProduct('${p.id}')">
+      ${p.image_url ? `<img src="${p.image_url}" style="width:100%;height:200px;object-fit:cover;display:block;border-radius:14px 14px 0 0;">` : ''}
       <div class="product-card-body">
         <div class="product-card-title">${p.title}</div>
         ${p.description ? `<div class="product-card-desc">${p.description}</div>` : ''}

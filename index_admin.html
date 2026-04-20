@@ -642,9 +642,10 @@ async function loadAllBids() {
 
 // ─── PRODUCTS ───
 async function loadProducts() {
-  const { data } = await sb.from('auction_items').select('*').order('created_at', { ascending: false });
+  const { data, error } = await sb.from('auction_items').select('*').order('created_at', { ascending: false });
   const box = $('products-list');
 
+  if (error) { box.innerHTML = '<div class="empty">Грешка: ' + error.message + '</div>'; return; }
   if (!data || !data.length) { box.innerHTML = '<div class="empty">Няма продукти</div>'; return; }
 
   box.innerHTML = data.map(p => `
@@ -654,10 +655,17 @@ async function loadProducts() {
         <div class="row-sub">Текуща цена: ${Number(p.current_price).toLocaleString('bg-BG')} лв.</div>
       </div>
       <div class="row-actions">
-        <span class="badge badge-green">Активен</span>
+        <button class="btn btn-red" onclick="deleteProduct('${p.id}')">Изтрий</button>
       </div>
     </div>
   `).join('');
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Сигурен ли си? Продуктът ще бъде изтрит!')) return;
+  await sb.from('bids').delete().eq('auction_id', id);
+  await sb.from('auction_items').delete().eq('id', id);
+  loadProducts();
 }
 
 async function addProduct() {

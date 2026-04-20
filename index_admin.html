@@ -213,6 +213,8 @@ textarea { resize: vertical; min-height: 80px; }
         <input id="prod-title" placeholder="Напр. Vintage Rolex Submariner">
         <label class="form-label">Описание</label>
         <textarea id="prod-desc" placeholder="Подробно описание на продукта..."></textarea>
+        <label class="form-label">Снимка на продукта</label>
+        <input type="file" id="prod-image" accept="image/*" style="cursor:pointer;">
         <div class="form-row">
           <div>
             <label class="form-label">Начална цена (лв.)</label>
@@ -465,6 +467,7 @@ async function loadProducts() {
   if (!data || !data.length) { box.innerHTML = '<div class="empty">Няма продукти</div>'; return; }
   box.innerHTML = data.map(p => `
     <div class="row-item">
+      ${p.image_url ? `<img src="${p.image_url}" style="width:48px;height:48px;object-fit:cover;border-radius:8px;flex-shrink:0;">` : ''}
       <div class="row-main">
         <div class="row-name">${p.title}</div>
         <div class="row-sub">Цена: ${Number(p.current_price).toLocaleString('bg-BG')} лв.</div>
@@ -487,12 +490,28 @@ async function addProduct() {
   const desc = $('prod-desc').value.trim();
   const price = parseFloat($('prod-price').value);
   const step = parseFloat($('prod-step').value) || 1;
+  const imageFile = $('prod-image').files[0];
+
   if (!title || !price) { showMsg('prod-msg', 'Заглавие и начална цена са задължителни!', 'error'); return; }
   showMsg('prod-msg', 'Добавяне...');
-  const { error } = await sb.from('auction_items').insert([{ title, description: desc, current_price: price, min_step: step }]);
+
+  let image_url = null;
+
+  if (imageFile) {
+    const ext = imageFile.name.split('.').pop();
+    const fileName = `product-${Date.now()}.${ext}`;
+    const { data: uploadData, error: uploadError } = await sb.storage
+      .from('auction-images')
+      .upload(fileName, imageFile, { upsert: true });
+    if (uploadError) { showMsg('prod-msg', 'Грешка при качване на снимката: ' + uploadError.message, 'error'); return; }
+    const { data: urlData } = sb.storage.from('auction-images').getPublicUrl(fileName);
+    image_url = urlData.publicUrl;
+  }
+
+  const { error } = await sb.from('auction_items').insert([{ title, description: desc, current_price: price, min_step: step, image_url }]);
   if (error) { showMsg('prod-msg', error.message, 'error'); }
   else {
-    $('prod-title').value = ''; $('prod-desc').value = ''; $('prod-price').value = ''; $('prod-step').value = '';
+    $('prod-title').value = ''; $('prod-desc').value = ''; $('prod-price').value = ''; $('prod-step').value = ''; $('prod-image').value = '';
     showMsg('prod-msg', '✓ Продуктът е добавен успешно!', 'success');
     loadProducts();
   }

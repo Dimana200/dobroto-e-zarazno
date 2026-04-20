@@ -151,25 +151,30 @@ textarea { resize: vertical; min-height: 80px; }
     <!-- DASHBOARD -->
     <div class="page active" id="page-dashboard">
       <div class="page-title">Здравей ✦</div>
-      <div class="page-sub">Преглед на активния търг</div>
-      <div class="stats-row">
+      <div class="page-sub">Преглед на всички активни търгове</div>
+
+      <div class="stats-row" style="grid-template-columns:1fr 1fr;">
         <div class="stat-card">
-          <div class="stat-label">Текуща цена</div>
-          <div class="stat-value gold" id="stat-price">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Наддавания</div>
-          <div class="stat-value" id="stat-bids">—</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-label">Одобрени</div>
+          <div class="stat-label">Одобрени участници</div>
           <div class="stat-value green" id="stat-users">—</div>
         </div>
+        <div class="stat-card">
+          <div class="stat-label">Общо наддавания</div>
+          <div class="stat-value" id="stat-bids-total">—</div>
+        </div>
       </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Активни търгове</div>
+          <button class="btn btn-ghost" onclick="loadDashboard()">↻ Обнови</button>
+        </div>
+        <div class="card-body" id="dashboard-auctions"><div class="empty">Зареждане...</div></div>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <div class="card-title">Последни наддавания</div>
-          <button class="btn btn-ghost" onclick="loadDashboard()">↻ Обнови</button>
         </div>
         <div class="card-body" id="dashboard-bids"><div class="empty">Зареждане...</div></div>
       </div>
@@ -309,15 +314,38 @@ async function checkPending() {
 
 // DASHBOARD
 async function loadDashboard() {
-  if (auctionId) {
-    const { data: item } = await sb.from('auction_items').select('current_price').eq('id', auctionId).single();
-    if (item) $('stat-price').textContent = Number(item.current_price).toLocaleString('bg-BG') + ' лв.';
-    const { data: bids } = await sb.from('bids').select('id').eq('auction_id', auctionId);
-    $('stat-bids').textContent = bids ? bids.length : 0;
-  }
+  // одобрени участници
   const { data: vUsers } = await sb.from('auction_profiles').select('id').eq('is_verified', true);
   $('stat-users').textContent = vUsers ? vUsers.length : 0;
 
+  // всички търгове
+  const { data: auctions } = await sb.from('auction_items').select('*').order('created_at', { ascending: false });
+  const auctBox = $('dashboard-auctions');
+
+  if (!auctions || !auctions.length) {
+    auctBox.innerHTML = '<div class="empty">Няма активни търгове</div>';
+    $('stat-bids-total').textContent = '0';
+  } else {
+    // брой наддавания за всеки
+    const bidCounts = await Promise.all(auctions.map(a =>
+      sb.from('bids').select('id').eq('auction_id', a.id).then(r => ({ id: a.id, count: r.data ? r.data.length : 0 }))
+    ));
+    const countMap = {};
+    bidCounts.forEach(b => { countMap[b.id] = b.count; });
+    const total = bidCounts.reduce((s, b) => s + b.count, 0);
+    $('stat-bids-total').textContent = total;
+
+    auctBox.innerHTML = auctions.map(a => `
+      <div class="row-item">
+        <div class="row-main">
+          <div class="row-name">${a.title}</div>
+          <div class="row-sub">Наддавания: ${countMap[a.id] || 0}</div>
+        </div>
+        <div style="color:var(--gold);font-weight:700;font-size:18px;">${Number(a.current_price).toLocaleString('bg-BG')} лв.</div>
+      </div>`).join('');
+  }
+
+  // последни наддавания
   const { data: recentBids } = await sb
     .from('bids')
     .select('amount, created_at, auction_profiles(full_name, nickname), auction_items(title)')

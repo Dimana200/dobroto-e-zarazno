@@ -646,8 +646,10 @@ async function loadUsers() {
   if (!verified || !verified.length) {
     verifiedBox.innerHTML = '<div class="empty">Няма одобрени потребители</div>';
   } else {
+    window._usersMap = {};
+    verified.forEach(u => { window._usersMap[u.id] = u; });
     verifiedBox.innerHTML = verified.map(u => `
-      <div class="row-item" onclick="showUser(${JSON.stringify(u).replace(/"/g, '&quot;')})" style="cursor:pointer;">
+      <div class="row-item" onclick="showUserById('${u.id}')" style="cursor:pointer;">
         <div class="row-main">
           <div class="row-name">${u.full_name} <span style="color:var(--gold);font-size:13px;">(${u.nickname || '—'})</span></div>
           <div class="row-sub">${u.role === 'admin' ? '👑 Администратор' : '✓ Одобрен участник'}</div>
@@ -758,6 +760,12 @@ async function addProduct() {
   }
 }
 
+
+function showUserById(id) {
+  const u = window._usersMap && window._usersMap[id];
+  if (!u) return;
+  showUser(u);
+}
 
 function showUser(u) {
   $('modal-name').textContent = u.full_name || '—';

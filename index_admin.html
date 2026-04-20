@@ -306,6 +306,67 @@ textarea { resize: vertical; min-height: 80px; }
   .form-row { grid-template-columns: 1fr; }
 }
 
+
+/* USER DETAIL MODAL */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  animation: slideUp 0.2s ease;
+}
+@keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+.modal-title {
+  font-family: Georgia, serif;
+  font-size: 20px;
+  margin-bottom: 16px;
+  color: var(--gold);
+}
+.modal-field {
+  margin-bottom: 12px;
+}
+.modal-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.modal-value {
+  font-size: 15px;
+  color: var(--text);
+  background: var(--surface2);
+  padding: 10px 14px;
+  border-radius: 8px;
+  word-break: break-word;
+}
+.modal-close {
+  width: 100%;
+  margin-top: 16px;
+  padding: 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  color: var(--text);
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 15px;
+  cursor: pointer;
+}
+
 /* SCROLL */
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -503,7 +564,7 @@ async function logout() {
 
 // ─── PENDING BADGE ───
 async function checkPending() {
-  const { data } = await sb.from('auction_profiles').select('id', { count: 'exact' }).eq('is_verified', false).eq('role', 'user');
+  const { data } = await sb.from('auction_profiles_full').select('id', { count: 'exact' }).eq('is_verified', false).eq('role', 'user');
   const count = data ? data.length : 0;
   const badge = $('pending-badge');
   if (count > 0) { badge.textContent = count; badge.style.display = 'inline'; }
@@ -521,7 +582,7 @@ async function loadDashboard() {
     $('stat-bids').textContent = bids ? bids.length : 0;
   }
 
-  const { data: vUsers } = await sb.from('auction_profiles').select('id', { count: 'exact' }).eq('is_verified', true);
+  const { data: vUsers } = await sb.from('auction_profiles_full').select('id', { count: 'exact' }).eq('is_verified', true);
   $('stat-users').textContent = vUsers ? vUsers.length : 0;
 
   // recent bids
@@ -552,7 +613,7 @@ async function loadDashboard() {
 // ─── USERS ───
 async function loadUsers() {
   // pending
-  const { data: pending } = await sb.from('auction_profiles').select('*').eq('is_verified', false).eq('role', 'user');
+  const { data: pending } = await sb.from('auction_profiles_full').select('*').eq('is_verified', false).eq('role', 'user');
   const pendingBox = $('pending-list');
 
   if (!pending || !pending.length) {
@@ -579,20 +640,20 @@ async function loadUsers() {
   }
 
   // verified
-  const { data: verified } = await sb.from('auction_profiles').select('*').eq('is_verified', true);
+  const { data: verified } = await sb.from('auction_profiles_full').select('*').eq('is_verified', true);
   const verifiedBox = $('verified-list');
 
   if (!verified || !verified.length) {
     verifiedBox.innerHTML = '<div class="empty">Няма одобрени потребители</div>';
   } else {
     verifiedBox.innerHTML = verified.map(u => `
-      <div class="row-item">
+      <div class="row-item" onclick="showUser(${JSON.stringify(u).replace(/"/g, '&quot;')})" style="cursor:pointer;">
         <div class="row-main">
           <div class="row-name">${u.full_name} <span style="color:var(--gold);font-size:13px;">(${u.nickname || '—'})</span></div>
           <div class="row-sub">${u.role === 'admin' ? '👑 Администратор' : '✓ Одобрен участник'}</div>
         </div>
         <div class="row-actions">
-          ${u.role !== 'admin' ? `<button class="btn btn-red" onclick="deleteUser('${u.id}')">Изтрий</button>` : ''}
+          ${u.role !== 'admin' ? `<button class="btn btn-red" onclick="event.stopPropagation();deleteUser('${u.id}')">Изтрий</button>` : ''}
         </div>
       </div>
     `).join('');
@@ -602,7 +663,7 @@ async function loadUsers() {
 }
 
 async function approveUser(id) {
-  await sb.from('auction_profiles').update({ is_verified: true }).eq('id', id);
+  await sb.from('auction_profiles_full').update({ is_verified: true }).eq('id', id);
   $('row-' + id)?.remove();
   checkPending();
   // refresh verified list
@@ -611,7 +672,7 @@ async function approveUser(id) {
 
 async function deleteUser(id) {
   if (!confirm('Сигурен ли си? Потребителят ще бъде изтрит!')) return;
-  await sb.from('auction_profiles').delete().eq('id', id);
+  await sb.from('auction_profiles_full').delete().eq('id', id);
   loadUsers();
 }
 
@@ -697,7 +758,51 @@ async function addProduct() {
   }
 }
 
+
+function showUser(u) {
+  $('modal-name').textContent = u.full_name || '—';
+  $('modal-nick').textContent = u.nickname || '—';
+  $('modal-email').textContent = u.email || '—';
+  $('modal-phone').textContent = u.phone || '—';
+  $('modal-mot').textContent = u.motivation || '—';
+  $('modal-status').textContent = u.role === 'admin' ? '👑 Администратор' : (u.is_verified ? '✓ Одобрен участник' : '⏳ Чака одобрение');
+  $('user-modal').classList.remove('hidden');
+}
+
+function closeUserModal(e) {
+  if (e.target.id === 'user-modal') $('user-modal').classList.add('hidden');
+}
+
 init();
 </script>
+
+<!-- USER DETAIL MODAL -->
+<div id="user-modal" class="modal-overlay hidden" onclick="closeUserModal(event)">
+  <div class="modal">
+    <div class="modal-title" id="modal-name">—</div>
+    <div class="modal-field">
+      <div class="modal-label">Псевдоним</div>
+      <div class="modal-value" id="modal-nick">—</div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Имейл</div>
+      <div class="modal-value" id="modal-email">—</div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Телефон</div>
+      <div class="modal-value" id="modal-phone">—</div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Мотивация</div>
+      <div class="modal-value" id="modal-mot">—</div>
+    </div>
+    <div class="modal-field">
+      <div class="modal-label">Статус</div>
+      <div class="modal-value" id="modal-status">—</div>
+    </div>
+    <button class="modal-close" onclick="$('user-modal').classList.add('hidden')">Затвори</button>
+  </div>
+</div>
+
 </body>
 </html>

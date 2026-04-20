@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AuctioLite – Наддаване</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <style>
 :root {
   --bg: #0d0d0d;
@@ -20,361 +19,75 @@
   --muted: #888;
   --radius: 12px;
 }
-
 * { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; display: flex; flex-direction: column; }
 
-body {
-  font-family: system-ui, -apple-system, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
+header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 100; }
+.logo { font-family: Georgia, serif; font-size: 20px; color: var(--gold); }
+.header-user { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.live-dot { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--green); font-weight: 500; }
+.live-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 1.5s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:.4; transform:scale(.8); } }
 
-/* HEADER */
-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--border);
-  background: var(--surface);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-}
+main { flex: 1; padding: 20px 16px; max-width: 540px; margin: 0 auto; width: 100%; }
 
-.logo {
-  font-family: Georgia, serif;
-  font-size: 22px;
-  color: var(--gold);
-  letter-spacing: 0.5px;
-}
+/* AUTH */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+.card-title { font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 14px; font-weight: 600; }
+.tabs { display: flex; gap: 4px; margin-bottom: 14px; }
+.tab { flex: 1; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: transparent; color: var(--muted); font-family: system-ui, -apple-system, sans-serif; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.18s; }
+.tab.active { background: var(--surface2); color: var(--text); border-color: var(--gold); }
 
-.header-user {
-  font-size: 13px;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.header-user span { color: var(--text); font-weight: 500; }
-
-/* MAIN */
-main {
-  flex: 1;
-  padding: 24px 16px;
-  max-width: 520px;
-  margin: 0 auto;
-  width: 100%;
-}
-
-/* PRODUCT CARD */
-.product-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  overflow: hidden;
-  margin-bottom: 20px;
-}
-
-.product-header {
-  padding: 24px 24px 0;
-}
-
-.product-label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 10px;
-}
-
-.product-title {
-  font-family: Georgia, serif;
-  font-size: 26px;
-  line-height: 1.2;
-  margin-bottom: 8px;
-}
-
-.product-desc {
-  font-size: 14px;
-  color: var(--muted);
-  line-height: 1.6;
-  margin-bottom: 20px;
-}
-
-.price-section {
-  background: linear-gradient(135deg, #1a1600 0%, #1f1a00 100%);
-  border-top: 1px solid #2e2500;
-  padding: 20px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.price-label {
-  font-size: 12px;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  margin-bottom: 4px;
-}
-
-.price-value {
-  font-family: Georgia, serif;
-  font-size: 42px;
-  color: var(--gold);
-  line-height: 1;
-  transition: transform 0.3s ease, color 0.3s ease;
-}
-
-.price-value.bump {
-  transform: scale(1.08);
-  color: var(--gold-light);
-}
-
-.price-currency { font-size: 20px; margin-left: 4px; }
-
-.bids-count {
-  text-align: right;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.bids-count strong { display: block; font-size: 22px; color: var(--text); font-weight: 600; }
-
-/* LIVE INDICATOR */
-.live-dot {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--green);
-  font-weight: 500;
-}
-
-.live-dot::before {
-  content: '';
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--green);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.4; transform: scale(0.8); }
-}
-
-/* CARDS */
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
-  margin-bottom: 16px;
-}
-
-.card-title {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--muted);
-  margin-bottom: 14px;
-  font-weight: 600;
-}
-
-/* BUTTONS */
-.btn {
-  display: block;
-  width: 100%;
-  padding: 14px 20px;
-  border: none;
-  border-radius: 10px;
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  margin-top: 10px;
-  letter-spacing: 0.3px;
-}
-
-.btn:active { transform: scale(0.97); }
-
-.btn-gold {
-  background: var(--gold);
-  color: #0d0d0d;
-}
-.btn-gold:hover { background: var(--gold-light); }
-
-.btn-red {
-  background: transparent;
-  border: 1px solid var(--red);
-  color: var(--red);
-}
-.btn-red:hover { background: var(--red); color: #fff; }
-
-.btn-ghost {
-  background: var(--surface2);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
-.btn-ghost:hover { border-color: var(--muted); }
-
-/* INPUTS */
-input, textarea {
-  width: 100%;
-  padding: 13px 14px;
-  margin-top: 8px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: 15px;
-  color: var(--text);
-  transition: border-color 0.2s;
-  outline: none;
-}
-
+input, textarea { width: 100%; padding: 12px 14px; margin-top: 8px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; font-family: system-ui, -apple-system, sans-serif; font-size: 14px; color: var(--text); transition: border-color 0.2s; outline: none; }
 input:focus, textarea:focus { border-color: var(--gold); }
 input::placeholder, textarea::placeholder { color: var(--muted); }
 textarea { resize: vertical; min-height: 80px; }
 
-/* BID INPUT ROW */
-.bid-row {
-  display: flex;
-  gap: 10px;
-  align-items: stretch;
-  margin-top: 0;
-}
+.btn { display: block; width: 100%; padding: 13px 20px; border: none; border-radius: 10px; font-family: system-ui, -apple-system, sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.18s; margin-top: 10px; }
+.btn:active { transform: scale(0.97); }
+.btn-gold { background: var(--gold); color: #0d0d0d; }
+.btn-gold:hover { background: var(--gold-light); }
+.btn-ghost { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
 
-.bid-row input {
-  flex: 1;
-  margin-top: 0;
-  font-size: 18px;
-  font-weight: 600;
-  text-align: center;
-}
-
-.bid-row .btn {
-  width: auto;
-  padding: 0 22px;
-  margin-top: 0;
-  white-space: nowrap;
-}
-
-/* TABS */
-.tabs {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 14px;
-}
-
-.tab {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: transparent;
-  color: var(--muted);
-  font-family: system-ui, -apple-system, sans-serif;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.18s;
-}
-
-.tab.active {
-  background: var(--surface2);
-  color: var(--text);
-  border-color: var(--gold);
-}
-
-/* BID HISTORY */
-.bid-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 240px;
-  overflow-y: auto;
-}
-
-.bid-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px 12px;
-  background: var(--surface2);
-  border-radius: 8px;
-  font-size: 14px;
-  animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(-6px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.bid-item .name { color: var(--text); font-weight: 500; }
-.bid-item .amount { color: var(--gold); font-weight: 600; }
-.bid-item .time { color: var(--muted); font-size: 12px; }
-
-.bid-item.mine { border-left: 2px solid var(--gold); }
-
-/* MESSAGES */
-.msg {
-  font-size: 13px;
-  text-align: center;
-  padding: 8px 0;
-  min-height: 22px;
-  color: var(--muted);
-  transition: all 0.2s;
-}
+.msg { font-size: 13px; text-align: center; padding: 8px 0; min-height: 22px; color: var(--muted); }
 .msg.error { color: var(--red); }
 .msg.success { color: var(--green); }
 
-/* WAITING */
-.waiting-box {
-  text-align: center;
-  padding: 30px 20px;
-}
+.waiting-box { text-align: center; padding: 30px 20px; }
+.waiting-icon { font-size: 48px; margin-bottom: 12px; }
+.waiting-box h3 { font-family: Georgia, serif; font-size: 20px; margin-bottom: 8px; }
+.waiting-box p { color: var(--muted); font-size: 14px; line-height: 1.6; }
 
-.waiting-icon {
-  font-size: 48px;
-  margin-bottom: 12px;
-}
+/* PRODUCTS LIST */
+.section-title { font-size: 12px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); font-weight: 600; margin-bottom: 14px; }
+.product-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 14px; cursor: pointer; transition: border-color 0.2s; }
+.product-card:hover { border-color: var(--gold); }
+.product-card.active { border-color: var(--gold); border-width: 2px; }
+.product-card-body { padding: 16px 18px; }
+.product-card-title { font-family: Georgia, serif; font-size: 18px; margin-bottom: 4px; }
+.product-card-desc { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+.product-card-footer { background: linear-gradient(135deg, #1a1600, #1f1a00); border-top: 1px solid #2e2500; padding: 12px 18px; display: flex; align-items: center; justify-content: space-between; }
+.price-big { font-family: Georgia, serif; font-size: 26px; color: var(--gold); }
+.bids-small { font-size: 12px; color: var(--muted); text-align: right; }
+.bids-small strong { display: block; font-size: 18px; color: var(--text); }
 
-.waiting-box h3 {
-  font-family: Georgia, serif;
-  font-size: 20px;
-  margin-bottom: 8px;
-}
+/* BID PANEL */
+.bid-panel { background: var(--surface); border: 1px solid var(--gold); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+.bid-panel-title { font-family: Georgia, serif; font-size: 16px; color: var(--gold); margin-bottom: 12px; }
+.bid-row { display: flex; gap: 10px; align-items: stretch; }
+.bid-row input { flex: 1; margin-top: 0; font-size: 16px; font-weight: 600; text-align: center; }
+.bid-row .btn { width: auto; padding: 0 20px; margin-top: 0; white-space: nowrap; }
 
-.waiting-box p {
-  color: var(--muted);
-  font-size: 14px;
-  line-height: 1.6;
-}
+/* BID HISTORY */
+.bid-list { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; margin-top: 12px; }
+.bid-item { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; background: var(--surface2); border-radius: 8px; font-size: 13px; }
+.bid-item.mine { border-left: 2px solid var(--gold); }
+.bid-item .name { color: var(--text); font-weight: 500; }
+.bid-item .amount { color: var(--gold); font-weight: 600; }
+.bid-item .time { color: var(--muted); font-size: 11px; }
 
-/* HIDDEN */
 .hidden { display: none !important; }
-
-/* FOOTER */
-footer {
-  text-align: center;
-  padding: 20px;
-  font-size: 12px;
-  color: #444;
-  border-top: 1px solid var(--border);
-}
-
-/* SCROLL */
+footer { text-align: center; padding: 20px; font-size: 12px; color: #444; border-top: 1px solid var(--border); }
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -386,46 +99,25 @@ footer {
   <div class="logo">✦ AuctioLite</div>
   <div class="header-user">
     <span class="live-dot">НА ЖИВО</span>
-    <span id="header-name" class="hidden"></span>
+    <span id="header-name" class="hidden" style="color:var(--text);font-weight:500;"></span>
     <button id="header-logout" class="hidden" onclick="logout()" style="background:none;border:1px solid #333;color:#888;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;">Изход</button>
   </div>
 </header>
 
 <main>
 
-  <!-- PRODUCT CARD -->
-  <div class="product-card" id="product-card">
-    <div class="product-header">
-      <div class="product-label">Текущ Продукт</div>
-      <div class="product-title" id="p-title">Зареждане...</div>
-      <div class="product-desc" id="p-desc"></div>
-    </div>
-    <div class="price-section">
-      <div>
-        <div class="price-label">Текуща цена</div>
-        <div class="price-value" id="p-price">--<span class="price-currency">лв.</span></div>
-      </div>
-      <div class="bids-count">
-        <div class="price-label">Наддавания</div>
-        <strong id="p-bids-count">0</strong>
-      </div>
-    </div>
-  </div>
-
-  <!-- AUTH SECTION -->
+  <!-- AUTH -->
   <div id="auth-section">
     <div class="tabs">
       <button class="tab active" onclick="showTab('login')">Вход</button>
       <button class="tab" onclick="showTab('reg')">Регистрация</button>
     </div>
-
     <div id="tab-login" class="card">
       <div class="card-title">Влезте в профила си</div>
       <input id="l-email" type="email" placeholder="Имейл адрес">
       <input id="l-pass" type="password" placeholder="Парола">
       <button class="btn btn-gold" onclick="signIn()">Вход →</button>
     </div>
-
     <div id="tab-reg" class="card hidden">
       <div class="card-title">Нов акаунт</div>
       <input id="r-name" placeholder="Пълно име *">
@@ -436,11 +128,10 @@ footer {
       <textarea id="r-mot" placeholder="Защо искате да участвате в търга? *"></textarea>
       <button class="btn btn-gold" onclick="signUp()">Създай акаунт →</button>
     </div>
-
     <p class="msg" id="auth-msg"></p>
   </div>
 
-  <!-- WAITING SECTION -->
+  <!-- WAITING -->
   <div id="waiting-section" class="card hidden">
     <div class="waiting-box">
       <div class="waiting-icon">⏳</div>
@@ -450,22 +141,20 @@ footer {
     <button class="btn btn-ghost" onclick="logout()">Изход</button>
   </div>
 
-  <!-- BID SECTION -->
-  <div id="bid-section" class="hidden">
-    <div class="card">
-      <div class="card-title">Вашето наддаване</div>
+  <!-- PRODUCTS -->
+  <div id="products-section" class="hidden">
+    <div class="section-title">Активни търгове</div>
+    <div id="products-list"></div>
+
+    <!-- BID PANEL (показва се при избор на продукт) -->
+    <div id="bid-panel" class="bid-panel hidden">
+      <div class="bid-panel-title" id="bid-panel-title">Наддавай</div>
       <div class="bid-row">
         <input id="bid-amt" type="number" placeholder="Сума в лв." min="0" step="1">
         <button class="btn btn-gold" onclick="placeBid()">Наддай ✦</button>
       </div>
       <p class="msg" id="bid-msg"></p>
-    </div>
-
-    <div class="card">
-      <div class="card-title">История на наддаванията</div>
-      <div class="bid-list" id="bid-list">
-        <div style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;">Зареждане...</div>
-      </div>
+      <div class="bid-list" id="bid-list"></div>
     </div>
   </div>
 
@@ -476,11 +165,11 @@ footer {
 <script>
 const SUPABASE_URL = "https://uanpswocsbhpeoavcaus.supabase.co";
 const SUPABASE_KEY = "sb_publishable_wgZTbaJ-zhv5J5diU6nfOw_8M-CLe55";
-
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-let auctionId = null;
 let currentUserId = null;
+let selectedAuctionId = null;
+let allProducts = [];
 let realtimeChannel = null;
 
 const $ = id => document.getElementById(id);
@@ -492,7 +181,6 @@ function showMsg(id, text, type = '') {
   if (type) setTimeout(() => { el.textContent = ''; el.className = 'msg'; }, 4000);
 }
 
-// ─── TABS ───
 function showTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   $('tab-login').classList.add('hidden');
@@ -501,60 +189,11 @@ function showTab(tab) {
   event.target.classList.add('active');
 }
 
-// ─── SECTIONS ───
 function showSection(id) {
-  ['auth-section','waiting-section','bid-section'].forEach(s => $(s).classList.add('hidden'));
+  ['auth-section','waiting-section','products-section'].forEach(s => $(s).classList.add('hidden'));
   $(id).classList.remove('hidden');
 }
 
-// ─── INIT ───
-async function init() {
-  await handleEmailRedirect();
-
-  const { data: items } = await sb.from('auction_items').select('*').limit(1);
-  if (!items || !items.length) { $('p-title').textContent = 'Няма активен продукт'; return; }
-
-  const item = items[0];
-  auctionId = item.id;
-  updateProductUI(item);
-
-  const { data: { user } } = await sb.auth.getUser();
-
-  if (!user) { showSection('auth-section'); return; }
-  currentUserId = user.id;
-
-  const { data: profile } = await sb.from('auction_profiles').select('*').eq('id', user.id).maybeSingle();
-
-  if (!profile) { showSection('auth-section'); showMsg('auth-msg', 'Регистрирайте се за достъп.'); return; }
-
-  $('header-name').textContent = profile.nickname || profile.full_name;
-  $('header-name').classList.remove('hidden');
-  $('header-logout').classList.remove('hidden');
-
-  if (!profile.is_verified) {
-    showSection('waiting-section');
-    return;
-  }
-
-  showSection('bid-section');
-  loadBidHistory();
-  subscribeRealtime();
-}
-
-function updateProductUI(item) {
-  $('p-title').textContent = item.title;
-  $('p-desc').textContent = item.description || '';
-  animatePrice(item.current_price);
-}
-
-function animatePrice(val) {
-  const el = $('p-price');
-  el.innerHTML = `${Number(val).toLocaleString('bg-BG')}<span class="price-currency">лв.</span>`;
-  el.classList.add('bump');
-  setTimeout(() => el.classList.remove('bump'), 400);
-}
-
-// ─── EMAIL REDIRECT ───
 async function handleEmailRedirect() {
   if (!location.hash.includes('access_token')) return;
   const params = new URLSearchParams(location.hash.substring(1));
@@ -566,97 +205,116 @@ async function handleEmailRedirect() {
   }
 }
 
-// ─── AUTH ───
-async function signUp() {
-  const name = $('r-name').value.trim();
-  const nick = $('r-nick').value.trim();
-  const email = $('r-email').value.trim();
-  const phone = $('r-phone').value.trim();
-  const pass = $('r-pass').value;
-  const mot = $('r-mot').value.trim();
+async function init() {
+  await handleEmailRedirect();
+  const { data: { user } } = await sb.auth.getUser();
 
-  if (!name || !nick || !email || !phone || !pass || !mot) {
-    showMsg('auth-msg', 'Всички полета са задължителни!', 'error'); return;
+  if (!user) { showSection('auth-section'); return; }
+  currentUserId = user.id;
+
+  const { data: profile } = await sb.from('auction_profiles').select('*').eq('id', user.id).maybeSingle();
+  if (!profile) { showSection('auth-section'); showMsg('auth-msg', 'Регистрирайте се за достъп.'); return; }
+
+  $('header-name').textContent = profile.nickname || profile.full_name;
+  $('header-name').classList.remove('hidden');
+  $('header-logout').classList.remove('hidden');
+
+  if (!profile.is_verified) { showSection('waiting-section'); return; }
+
+  showSection('products-section');
+  loadProducts();
+  subscribeRealtime();
+}
+
+async function loadProducts() {
+  const { data } = await sb.from('auction_items').select('*').order('created_at', { ascending: false });
+  if (!data || !data.length) {
+    $('products-list').innerHTML = '<div style="text-align:center;padding:40px 0;color:var(--muted);">Няма активни търгове</div>';
+    return;
   }
-  if (pass.length < 6) { showMsg('auth-msg', 'Паролата трябва да е мин. 6 символа!', 'error'); return; }
-
-  showMsg('auth-msg', 'Регистрация...');
-
-  const { data, error } = await sb.auth.signUp({
-    email, password: pass,
-    options: { emailRedirectTo: location.origin }
-  });
-
-  if (error) { showMsg('auth-msg', error.message, 'error'); return; }
-
-  await sb.from('auction_profiles').insert([{
-    id: data.user.id,
-    full_name: name,
-    nickname: nick,
-    phone: phone,
-    motivation: mot
-  }]);
-
-  showMsg('auth-msg', '✓ Регистрацията е успешна! Изчакайте одобрение от администратора.', 'success');
+  allProducts = data;
+  renderProducts();
 }
 
-async function signIn() {
-  const email = $('l-email').value.trim();
-  const pass = $('l-pass').value;
+function renderProducts() {
+  $('products-list').innerHTML = allProducts.map(p => `
+    <div class="product-card ${selectedAuctionId === p.id ? 'active' : ''}" onclick="selectProduct('${p.id}')">
+      <div class="product-card-body">
+        <div class="product-card-title">${p.title}</div>
+        ${p.description ? `<div class="product-card-desc">${p.description}</div>` : ''}
+      </div>
+      <div class="product-card-footer">
+        <div>
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;">Текуща цена</div>
+          <div class="price-big" id="price-${p.id}">${Number(p.current_price).toLocaleString('bg-BG')} лв.</div>
+        </div>
+        <div class="bids-small">
+          <div>Наддавания</div>
+          <strong id="bids-count-${p.id}">—</strong>
+        </div>
+      </div>
+    </div>
+  `).join('');
 
-  if (!email || !pass) { showMsg('auth-msg', 'Въведете имейл и парола!', 'error'); return; }
-
-  showMsg('auth-msg', 'Влизане...');
-
-  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
-
-  if (error) { showMsg('auth-msg', 'Грешен имейл или парола!', 'error'); return; }
-
-  location.reload();
+  // load bid counts
+  allProducts.forEach(p => loadBidCount(p.id));
 }
 
-async function logout() {
-  await sb.auth.signOut();
-  location.reload();
+async function loadBidCount(id) {
+  const { data } = await sb.from('bids').select('id').eq('auction_id', id);
+  const el = $('bids-count-' + id);
+  if (el) el.textContent = data ? data.length : 0;
 }
 
-// ─── BID ───
+async function selectProduct(id) {
+  selectedAuctionId = id;
+  renderProducts();
+
+  const product = allProducts.find(p => p.id === id);
+  $('bid-panel-title').textContent = `Наддавай за: ${product?.title || ''}`;
+  $('bid-panel').classList.remove('hidden');
+  $('bid-amt').value = '';
+  $('bid-msg').textContent = '';
+
+  loadBidHistory();
+  $('bid-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 async function placeBid() {
+  if (!selectedAuctionId) return;
   const val = parseFloat($('bid-amt').value);
-
   if (!val || val <= 0) { showMsg('bid-msg', 'Въведете валидна сума!', 'error'); return; }
 
   showMsg('bid-msg', 'Изпращане...');
 
-  const { error } = await sb.rpc('place_bid', { p_auction: auctionId, p_amount: val });
+  const { error } = await sb.rpc('place_bid', { p_auction: selectedAuctionId, p_amount: val });
 
   if (error) {
     showMsg('bid-msg', error.message, 'error');
   } else {
     $('bid-amt').value = '';
     showMsg('bid-msg', '✓ Наддаването е регистрирано!', 'success');
-    // refresh data
-    const { data: items } = await sb.from('auction_items').select('*').eq('id', auctionId).limit(1);
-    if (items && items[0]) updateProductUI(items[0]);
+    const { data } = await sb.from('auction_items').select('*').eq('id', selectedAuctionId).single();
+    if (data) {
+      allProducts = allProducts.map(p => p.id === data.id ? data : p);
+      renderProducts();
+    }
     loadBidHistory();
   }
 }
 
-// ─── BID HISTORY ───
 async function loadBidHistory() {
+  if (!selectedAuctionId) return;
   const { data: bids } = await sb
     .from('bids')
     .select('amount, created_at, user_id, auction_profiles(full_name, nickname)')
-    .eq('auction_id', auctionId)
+    .eq('auction_id', selectedAuctionId)
     .order('created_at', { ascending: false })
     .limit(30);
 
-  // update count
-  $('p-bids-count').textContent = bids ? bids.length : 0;
-
   const list = $('bid-list');
   if (!bids || !bids.length) {
-    list.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0;">Все още няма наддавания</div>';
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;text-align:center;padding:16px 0;">Все още няма наддавания</div>';
     return;
   }
 
@@ -671,31 +329,59 @@ async function loadBidHistory() {
           <div class="time">${time}</div>
         </div>
         <div class="amount">${Number(b.amount).toLocaleString('bg-BG')} лв.</div>
-      </div>
-    `;
+      </div>`;
   }).join('');
 }
 
-// ─── REALTIME ───
 function subscribeRealtime() {
-  realtimeChannel = sb.channel('auction-live')
-    .on('postgres_changes', {
-      event: '*',
-      schema: 'public',
-      table: 'auction_items',
-      filter: `id=eq.${auctionId}`
-    }, payload => {
-      if (payload.new) updateProductUI(payload.new);
+  realtimeChannel = sb.channel('auction-live-all')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'auction_items' }, payload => {
+      if (payload.new) {
+        allProducts = allProducts.map(p => p.id === payload.new.id ? { ...p, ...payload.new } : p);
+        renderProducts();
+        const priceEl = $('price-' + payload.new.id);
+        if (priceEl) priceEl.textContent = Number(payload.new.current_price).toLocaleString('bg-BG') + ' лв.';
+      }
     })
-    .on('postgres_changes', {
-      event: 'INSERT',
-      schema: 'public',
-      table: 'bids',
-      filter: `auction_id=eq.${auctionId}`
-    }, () => {
-      loadBidHistory();
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'bids' }, payload => {
+      if (payload.new.auction_id === selectedAuctionId) loadBidHistory();
+      loadBidCount(payload.new.auction_id);
     })
     .subscribe();
+}
+
+async function signUp() {
+  const name = $('r-name').value.trim();
+  const nick = $('r-nick').value.trim();
+  const email = $('r-email').value.trim();
+  const phone = $('r-phone').value.trim();
+  const pass = $('r-pass').value;
+  const mot = $('r-mot').value.trim();
+
+  if (!name || !nick || !email || !phone || !pass || !mot) { showMsg('auth-msg', 'Всички полета са задължителни!', 'error'); return; }
+  if (pass.length < 6) { showMsg('auth-msg', 'Паролата трябва да е мин. 6 символа!', 'error'); return; }
+
+  showMsg('auth-msg', 'Регистрация...');
+  const { data, error } = await sb.auth.signUp({ email, password: pass, options: { emailRedirectTo: location.origin } });
+  if (error) { showMsg('auth-msg', error.message, 'error'); return; }
+
+  await sb.from('auction_profiles').insert([{ id: data.user.id, full_name: name, nickname: nick, phone, motivation: mot }]);
+  showMsg('auth-msg', '✓ Регистрацията е успешна! Изчакайте одобрение.', 'success');
+}
+
+async function signIn() {
+  const email = $('l-email').value.trim();
+  const pass = $('l-pass').value;
+  if (!email || !pass) { showMsg('auth-msg', 'Въведете имейл и парола!', 'error'); return; }
+  showMsg('auth-msg', 'Влизане...');
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  if (error) { showMsg('auth-msg', 'Грешен имейл или парола!', 'error'); return; }
+  location.reload();
+}
+
+async function logout() {
+  await sb.auth.signOut();
+  location.reload();
 }
 
 init();
